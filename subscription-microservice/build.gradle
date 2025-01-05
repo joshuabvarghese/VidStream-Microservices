@@ -1,0 +1,85 @@
+plugins {
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.micronaut.application") version "4.2.1"
+    id("io.micronaut.aot") version "4.2.1"
+    id("jacoco")
+    id("com.google.cloud.tools.jib") version "3.1.4"
+}
+
+version = "0.1"
+group = "com.example"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("io.micronaut:micronaut-http-validation")
+    annotationProcessor("io.micronaut.serde:micronaut-serde-processor")
+    implementation("io.micronaut.kafka:micronaut-kafka")
+    implementation("io.micronaut.neo4j:micronaut-neo4j-bolt")
+    implementation("io.micronaut.serde:micronaut-serde-jackson")
+    compileOnly("io.micronaut:micronaut-http-client")
+    compileOnly("org.projectlombok:lombok")
+    runtimeOnly("ch.qos.logback:logback-classic:1.4.14")
+    testImplementation("io.micronaut:micronaut-http-client")
+    testImplementation("org.awaitility:awaitility:4.2.0")
+    testImplementation("org.mockito:mockito-core")
+    testRuntimeOnly("org.neo4j.test:neo4j-harness")
+}
+
+
+application {
+    mainClass.set("com.example.SubscriptionApplication")
+}
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
+
+graalvmNative.toolchainDetection = false
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("com.example.*")
+    }
+    aot {
+        // Please review carefully the optimizations enabled below
+        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = false
+        convertYamlToJava = false
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+        optimizeNetty = true
+    }
+}
+
+test {
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ['com/example/helper/**'])
+        }))
+    }
+}
+
+jib {
+    from {
+//        image = 'eclipse-temurin:17-jre-focal'
+        image = 'eclipse-temurin:17-jdk-alpine'
+    }
+    to {
+        tags = ['latest', project.version]
+    }
+}
+
