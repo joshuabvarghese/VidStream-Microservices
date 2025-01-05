@@ -13,6 +13,8 @@ The microservices are independently scalable and deployable, ensuring flexibilit
 
 ## Architecture
 
+![Architecture ](Architecture.gif)
+
 VidStream utilizes a microservices architecture with the following key components:
 
 ### Microservices
